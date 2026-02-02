@@ -23,8 +23,9 @@ class TransactionController extends Controller
     public function index(): JsonResponse
     {
         $filters = $this->parseFilters(RequestFacade::query('filters'));
+        $user = auth()->user();
         $q = Transaction::query()
-            ->whereHas('account', fn ($q) => $q->where('user_id', Auth::id()))
+            ->whereHas('account', fn ($q) => $q->where('user_id', $user->id))
             ->with(['account:id,name', 'category:id,name,type']);
 
         // Basic filters
@@ -88,8 +89,9 @@ class TransactionController extends Controller
 
     public function common(): JsonResponse
     {
+        $user = auth()->user();
         $query = Transaction::query()
-            ->whereHas('account', fn ($q) => $q->where('user_id', Auth::id()));
+            ->whereHas('account', fn ($q) => $q->where('user_id', $user->id));
 
         // Optional filters: type and account
         $type = request()->query('type');

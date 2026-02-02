@@ -50,7 +50,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         if (! Auth::attempt($request->only('email', 'password'))) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            return response()->json(['message' => '401'], 401);
         }
 
         $user = $request->user();

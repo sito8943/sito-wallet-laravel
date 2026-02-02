@@ -20,12 +20,12 @@ class CurrencyController extends Controller
     {
         $filtersStr = RequestFacade::query('filters');
         $filters = $this->parseFilters($filtersStr);
-
-        $q = Currency::query()->where('user_id', Auth::id());
+        $user = auth()->user();
+        $q = Currency::query()->where('user_id', $user->id);
         // map: userId -> user_id, id stays, name stays
         $this->applyBasicFilters($q, $filters, ['userId' => 'user_id']);
 
-        $items = $q->orderByDesc('id')->get(['id', 'name', 'symbol', 'updated_at']);
+        $items = $q->orderByDesc('id')->get(['id', 'name', 'symbol', 'updated_at', 'deleted_at']);
         return response()->json(\App\Http\Resources\CurrencyResource::collection($items));
     }
 
@@ -57,8 +57,9 @@ class CurrencyController extends Controller
 
     public function common(): JsonResponse
     {
+        $user = auth()->user();
         $items = Currency::query()
-            ->where('user_id', Auth::id())
+            ->where('user_id', $user->id)
             ->orderBy('name')
             ->get(['id', 'name', 'symbol', 'updated_at']);
 

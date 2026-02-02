@@ -20,7 +20,8 @@ class TransactionCategoryController extends Controller
     public function index(): JsonResponse
     {
         $filters = $this->parseFilters(RequestFacade::query('filters'));
-        $q = TransactionCategory::query()->where('user_id', Auth::id());
+        $user = auth()->user();
+        $q = TransactionCategory::query()->where('user_id', $user->id);
         $this->applyBasicFilters($q, $filters, ['userId' => 'user_id']);
 
         // Map type filter if provided as 0/1
@@ -65,8 +66,9 @@ class TransactionCategoryController extends Controller
 
     public function common(): JsonResponse
     {
+        $user = auth()->user();
         $items = TransactionCategory::query()
-            ->where('user_id', Auth::id())
+            ->where('user_id', $user->id)
             ->orderBy('name')
             ->get(['id', 'name', 'type', 'initial', 'updated_at']);
 

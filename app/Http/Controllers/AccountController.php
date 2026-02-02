@@ -20,7 +20,8 @@ class AccountController extends Controller
     public function index(): JsonResponse
     {
         $filters = $this->parseFilters(RequestFacade::query('filters'));
-        $q = Account::query()->where('user_id', Auth::id())->with('currency');
+        $user = auth()->user();
+        $q = Account::query()->where('user_id', $user->id)->with('currency');
         $this->applyBasicFilters($q, $filters, ['userId' => 'user_id']);
 
         $pageSize = (int) (RequestFacade::query('pageSize', 20));
@@ -58,8 +59,9 @@ class AccountController extends Controller
 
     public function common(): JsonResponse
     {
+        $user = auth()->user();
         $items = Account::query()
-            ->where('user_id', Auth::id())
+            ->where('user_id', $user->id)
             ->with('currency:id,name,symbol,updated_at')
             ->orderBy('name')
             ->get(['id', 'name', 'currency_id', 'updated_at']);
