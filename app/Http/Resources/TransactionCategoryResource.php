@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class CurrencyResource extends JsonResource
+class TransactionCategoryResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,9 +16,11 @@ class CurrencyResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'symbol' => $this->symbol,
             'name' => $this->name,
-            'updatedAt' => $this->updated_at,
+            'type' => $this->type,
+            'initial' => (bool) $this->initial,
+            'user_id' => $this->user_id,
+            'updated_at' => $this->updated_at,
             'deletedAt' => $this->deleted_at,
         ];
     }
