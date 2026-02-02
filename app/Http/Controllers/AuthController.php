@@ -11,6 +11,16 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    private function toSessionDto(User $user, string $token): array
+    {
+        return [
+            'id' => $user->id,
+            'username' => $user->name,
+            'email' => $user->email,
+            'token' => $token,
+        ];
+    }
+
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::create([
@@ -21,14 +31,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('api')->plainTextToken;
 
-        return response()->json([
-            'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ],
-        ], 201);
+        return response()->json($this->toSessionDto($user, $token), 201);
     }
 
     public function login(LoginRequest $request): JsonResponse
@@ -40,14 +43,7 @@ class AuthController extends Controller
         $user = $request->user();
         $token = $user->createToken('api')->plainTextToken;
 
-        return response()->json([
-            'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ],
-        ]);
+        return response()->json($this->toSessionDto($user, $token));
     }
 
     public function logout(): JsonResponse
@@ -60,11 +56,13 @@ class AuthController extends Controller
     public function me(): JsonResponse
     {
         $user = request()->user();
+        $token = $user?->currentAccessToken()?->plainTextToken ?? '';
+        // If we don't have the plain token, return without token (client already stores it)
         return response()->json([
             'id' => $user->id,
-            'name' => $user->name,
+            'username' => $user->name,
             'email' => $user->email,
+            'token' => $token,
         ]);
     }
 }
-
