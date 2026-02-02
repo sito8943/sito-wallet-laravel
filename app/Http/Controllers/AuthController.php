@@ -23,11 +23,24 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = User::create([
-            'name' => $request->string('name'),
-            'email' => $request->string('email'),
-            'password' => Hash::make($request->string('password')),
-        ]);
+        $data = $request->validated();
+
+        if (User::where('email', $data['email'])->exists()) {
+            return response()->json([
+                'message' => '422',
+                'errors' => ['email' => ['The email has already been taken.']],
+            ], 422);
+        }
+
+        try {
+            $user = User::create([
+                'name' => (string) ($data['name'] ?? ''),
+                'email' => (string) ($data['email'] ?? ''),
+                'password' => Hash::make((string) ($data['password'] ?? '')),
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            throw $e;
+        }
 
         $token = $user->createToken('api')->plainTextToken;
 
