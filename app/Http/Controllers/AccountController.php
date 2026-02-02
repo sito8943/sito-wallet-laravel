@@ -8,14 +8,26 @@ use App\Models\Account;
 use App\Services\AccountService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Request as RequestFacade;
+use App\Http\Controllers\Concerns\ParsesFilters;
 
 class AccountController extends Controller
 {
+    use ParsesFilters;
+
     public function __construct(private readonly AccountService $service) {}
 
     public function index(): JsonResponse
     {
-        return response()->json($this->service->list());
+        $filters = $this->parseFilters(RequestFacade::query('filters'));
+        $q = Account::query()->where('user_id', Auth::id())->with('currency');
+        $this->applyBasicFilters($q, $filters, ['userId' => 'user_id']);
+
+        $pageSize = (int) (RequestFacade::query('pageSize', 20));
+        $pageSize = $pageSize > 0 && $pageSize <= 200 ? $pageSize : 20;
+        $page = (int) (RequestFacade::query('page', 1));
+        $paginator = $q->orderByDesc('id')->paginate($pageSize, ['*'], 'page', $page);
+        return response()->json($this->toQueryResult($paginator));
     }
 
     public function store(StoreAccountRequest $request): JsonResponse
@@ -50,21 +62,8 @@ class AccountController extends Controller
             ->where('user_id', Auth::id())
             ->with('currency:id,name,symbol,updated_at')
             ->orderBy('name')
-            ->get(['id', 'name', 'currency_id', 'updated_at'])
-            ->map(function ($a) {
-                return [
-                    'id' => $a->id,
-                    'name' => $a->name,
-                    'updatedAt' => $a->updated_at,
-                    'currency' => [
-                        'id' => $a->currency?->id,
-                        'name' => $a->currency?->name,
-                        'symbol' => $a->currency?->symbol,
-                        'updatedAt' => $a->currency?->updated_at,
-                    ],
-                ];
-            });
+            ->get(['id', 'name', 'currency_id', 'updated_at']);
 
-        return response()->json($items);
+        return response()->json(\App\Http\Resources\AccountCommonResource::collection($items));
     }
 }

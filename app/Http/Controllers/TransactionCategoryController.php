@@ -9,14 +9,32 @@ use App\Services\TransactionCategoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\TransactionType as TypeEnum;
+use Illuminate\Support\Facades\Request as RequestFacade;
+use App\Http\Controllers\Concerns\ParsesFilters;
 
 class TransactionCategoryController extends Controller
 {
+    use ParsesFilters;
     public function __construct(private readonly TransactionCategoryService $service) {}
 
     public function index(): JsonResponse
     {
-        return response()->json($this->service->list());
+        $filters = $this->parseFilters(RequestFacade::query('filters'));
+        $q = TransactionCategory::query()->where('user_id', Auth::id());
+        $this->applyBasicFilters($q, $filters, ['userId' => 'user_id']);
+
+        // Map type filter if provided as 0/1
+        foreach ($filters as [$field, $op, $value]) {
+            if ($field === 'type' && $op === '==') {
+                $q->where('type', ((int) $value) === 1 ? 'IN' : 'OUT');
+            }
+        }
+
+        $pageSize = (int) (RequestFacade::query('pageSize', 20));
+        $pageSize = $pageSize > 0 && $pageSize <= 200 ? $pageSize : 20;
+        $page = (int) (RequestFacade::query('page', 1));
+        $paginator = $q->orderByDesc('id')->paginate($pageSize, ['*'], 'page', $page);
+        return response()->json($this->toQueryResult($paginator));
     }
 
     public function store(StoreTransactionCategoryRequest $request): JsonResponse
@@ -50,22 +68,8 @@ class TransactionCategoryController extends Controller
         $items = TransactionCategory::query()
             ->where('user_id', Auth::id())
             ->orderBy('name')
-            ->get(['id', 'name', 'type', 'initial', 'updated_at'])
-            ->map(function ($c) {
-                $type = $c->type instanceof TypeEnum ? $c->type : TypeEnum::from($c->type);
-                $typeInt = match ($type) {
-                    TypeEnum::OUT => 0,
-                    TypeEnum::IN => 1,
-                };
-                return [
-                    'id' => $c->id,
-                    'name' => $c->name,
-                    'initial' => (bool) $c->initial,
-                    'type' => $typeInt,
-                    'updatedAt' => $c->updated_at,
-                ];
-            });
+            ->get(['id', 'name', 'type', 'initial', 'updated_at']);
 
-        return response()->json($items);
+        return response()->json(\App\Http\Resources\TransactionCategoryCommonResource::collection($items));
     }
 }

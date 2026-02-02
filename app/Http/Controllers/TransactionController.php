@@ -10,21 +10,39 @@ use App\Models\Transaction;
 use App\Services\TransactionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Request as RequestFacade;
+use App\Http\Controllers\Concerns\ParsesFilters;
 
 class TransactionController extends Controller
 {
+    use ParsesFilters;
     public function __construct(private readonly TransactionService $service)
     {
     }
 
     public function index(): JsonResponse
     {
-        $txs = Transaction::query()
-            ->whereHas('account', fn($q) => $q->where('user_id', Auth::id()))
-            ->with(['account:id,name', 'category:id,name,type'])
-            ->orderByDesc('date')
-            ->paginate(20);
-        return response()->json($txs);
+        $filters = $this->parseFilters(RequestFacade::query('filters'));
+        $q = Transaction::query()
+            ->whereHas('account', fn ($q) => $q->where('user_id', Auth::id()))
+            ->with(['account:id,name', 'category:id,name,type']);
+
+        // Basic filters
+        $this->applyBasicFilters($q, $filters, ['account' => 'account_id'], true);
+        // Map type filter 0/1 into category.type IN/OUT
+        foreach ($filters as [$field, $op, $value]) {
+            if ($field === 'type' && $op === '==') {
+                $q->whereHas('category', function ($c) use ($value) {
+                    $c->where('type', ((int) $value) === 1 ? 'IN' : 'OUT');
+                });
+            }
+        }
+
+        $pageSize = (int) (RequestFacade::query('pageSize', 20));
+        $pageSize = $pageSize > 0 && $pageSize <= 200 ? $pageSize : 20;
+        $page = (int) (RequestFacade::query('page', 1));
+        $paginator = $q->orderByDesc('date')->paginate($pageSize, ['*'], 'page', $page);
+        return response()->json($this->toQueryResult($paginator));
     }
 
     public function store(CreateTransactionRequest $request): JsonResponse
@@ -89,12 +107,8 @@ class TransactionController extends Controller
         $items = $query
             ->orderByDesc('updated_at')
             ->limit(100)
-            ->get(['id', 'updated_at'])
-            ->map(fn ($t) => [
-                'id' => $t->id,
-                'updatedAt' => $t->updated_at,
-            ]);
+            ->get(['id', 'updated_at']);
 
-        return response()->json($items);
+        return response()->json(\App\Http\Resources\TransactionCommonResource::collection($items));
     }
 }
