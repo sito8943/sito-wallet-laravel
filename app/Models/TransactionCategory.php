@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Enums\TransactionType;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TransactionCategory extends Model
 {
+    use HasFactory;
     protected $table = 'transaction_categories';
 
     protected $fillable = [
@@ -34,4 +36,3 @@ class TransactionCategory extends Model
         return $this->hasMany(Transaction::class, 'category_id');
     }
 }
-

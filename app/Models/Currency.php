@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Currency extends Model
 {
+    use HasFactory;
     protected $table = 'currencies';
 
     protected $fillable = [
@@ -27,4 +29,3 @@ class Currency extends Model
         return $this->hasMany(Account::class);
     }
 }
-
