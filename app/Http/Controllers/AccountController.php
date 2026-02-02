@@ -26,9 +26,17 @@ class AccountController extends Controller
 
         $pageSize = (int) (RequestFacade::query('pageSize', 20));
         $pageSize = $pageSize > 0 && $pageSize <= 200 ? $pageSize : 20;
-        $page = (int) (RequestFacade::query('page', 1));
+        $page = ((int) (RequestFacade::query('page', 0))) + 1; // receive 0-based index
         $paginator = $q->orderByDesc('id')->paginate($pageSize, ['*'], 'page', $page);
-        return response()->json($this->toQueryResult($paginator));
+        $items = collect($paginator->items())
+            ->map(fn ($m) => (new \App\Http\Resources\AccountResource($m))->toArray(request()));
+        return response()->json([
+            'items' => $items,
+            'currentPage' => max(0, $paginator->currentPage() - 1),
+            'pageSize' => $paginator->perPage(),
+            'totalElements' => $paginator->total(),
+            'totalPages' => $paginator->lastPage(),
+        ]);
     }
 
     public function store(StoreAccountRequest $request): JsonResponse
@@ -40,14 +48,14 @@ class AccountController extends Controller
     public function show(Account $account): JsonResponse
     {
         $this->authorize('view', $account);
-        return response()->json($account->load('currency'));
+        return response()->json(new \App\Http\Resources\AccountResource($account->load('currency')));
     }
 
     public function update(UpdateAccountRequest $request, Account $account): JsonResponse
     {
         $this->authorize('update', $account);
         $updated = $this->service->update($account, $request->validated());
-        return response()->json($updated);
+        return response()->json(new \App\Http\Resources\AccountResource($updated));
     }
 
     public function destroy(Account $account): JsonResponse

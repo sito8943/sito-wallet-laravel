@@ -33,9 +33,17 @@ class TransactionCategoryController extends Controller
 
         $pageSize = (int) (RequestFacade::query('pageSize', 20));
         $pageSize = $pageSize > 0 && $pageSize <= 200 ? $pageSize : 20;
-        $page = (int) (RequestFacade::query('page', 1));
+        $page = ((int) (RequestFacade::query('page', 0))) + 1; // receive 0-based index
         $paginator = $q->orderByDesc('id')->paginate($pageSize, ['*'], 'page', $page);
-        return response()->json($this->toQueryResult($paginator));
+        $items = collect($paginator->items())
+            ->map(fn ($m) => (new \App\Http\Resources\TransactionCategoryResource($m))->toArray(request()));
+        return response()->json([
+            'items' => $items,
+            'currentPage' => max(0, $paginator->currentPage() - 1),
+            'pageSize' => $paginator->perPage(),
+            'totalElements' => $paginator->total(),
+            'totalPages' => $paginator->lastPage(),
+        ]);
     }
 
     public function store(StoreTransactionCategoryRequest $request): JsonResponse
@@ -47,14 +55,14 @@ class TransactionCategoryController extends Controller
     public function show(TransactionCategory $transactionCategory): JsonResponse
     {
         $this->authorize('view', $transactionCategory);
-        return response()->json($transactionCategory);
+        return response()->json(new \App\Http\Resources\TransactionCategoryResource($transactionCategory));
     }
 
     public function update(UpdateTransactionCategoryRequest $request, TransactionCategory $transactionCategory): JsonResponse
     {
         $this->authorize('update', $transactionCategory);
         $updated = $this->service->update($transactionCategory, $request->validated());
-        return response()->json($updated);
+        return response()->json(new \App\Http\Resources\TransactionCategoryResource($updated));
     }
 
     public function destroy(TransactionCategory $transactionCategory): JsonResponse

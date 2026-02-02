@@ -24,9 +24,20 @@ class CurrencyController extends Controller
         $q = Currency::query()->where('user_id', $user->id);
         // map: userId -> user_id, id stays, name stays
         $this->applyBasicFilters($q, $filters, ['userId' => 'user_id']);
+        $pageSize = (int) (RequestFacade::query('pageSize', 20));
+        $pageSize = $pageSize > 0 && $pageSize <= 200 ? $pageSize : 20;
+        $page = ((int) (RequestFacade::query('page', 0))) + 1; // receive 0-based index
+        $paginator = $q->orderByDesc('id')->paginate($pageSize, ['*'], 'page', $page);
 
-        $items = $q->orderByDesc('id')->get(['id', 'name', 'symbol', 'updated_at', 'deleted_at']);
-        return response()->json(\App\Http\Resources\CurrencyResource::collection($items));
+        $items = collect($paginator->items())
+            ->map(fn ($m) => (new \App\Http\Resources\CurrencyResource($m))->toArray(request()));
+        return response()->json([
+            'items' => $items,
+            'currentPage' => max(0, $paginator->currentPage() - 1),
+            'pageSize' => $paginator->perPage(),
+            'totalElements' => $paginator->total(),
+            'totalPages' => $paginator->lastPage(),
+        ]);
     }
 
     public function store(StoreCurrencyRequest $request): JsonResponse

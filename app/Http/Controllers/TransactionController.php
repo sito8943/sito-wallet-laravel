@@ -41,9 +41,17 @@ class TransactionController extends Controller
 
         $pageSize = (int) (RequestFacade::query('pageSize', 20));
         $pageSize = $pageSize > 0 && $pageSize <= 200 ? $pageSize : 20;
-        $page = (int) (RequestFacade::query('page', 1));
+        $page = ((int) (RequestFacade::query('page', 0))) + 1; // receive 0-based index
         $paginator = $q->orderByDesc('date')->paginate($pageSize, ['*'], 'page', $page);
-        return response()->json($this->toQueryResult($paginator));
+        $items = collect($paginator->items())
+            ->map(fn ($m) => (new \App\Http\Resources\TransactionResource($m))->toArray(request()));
+        return response()->json([
+            'items' => $items,
+            'currentPage' => max(0, $paginator->currentPage() - 1),
+            'pageSize' => $paginator->perPage(),
+            'totalElements' => $paginator->total(),
+            'totalPages' => $paginator->lastPage(),
+        ]);
     }
 
     public function store(CreateTransactionRequest $request): JsonResponse
@@ -70,14 +78,14 @@ class TransactionController extends Controller
     public function show(Transaction $transaction): JsonResponse
     {
         $this->authorize('view', $transaction);
-        return response()->json($transaction->load(['account', 'category']));
+        return response()->json(new \App\Http\Resources\TransactionResource($transaction->load(['account', 'category'])));
     }
 
     public function update(UpdateTransactionRequest $request, Transaction $transaction): JsonResponse
     {
         $this->authorize('update', $transaction);
         $updated = $this->service->update($transaction, $request->validated());
-        return response()->json($updated);
+        return response()->json(new \App\Http\Resources\TransactionResource($updated));
     }
 
     public function destroy(Transaction $transaction): JsonResponse
