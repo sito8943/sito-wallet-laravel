@@ -19,6 +19,7 @@ return new class extends Migration {
 
             $table->unique(['name', 'user_id']);
             $table->index(['user_id', 'currency_id']);
+            $table->softDeletes();
         });
     }
 
