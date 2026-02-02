@@ -8,13 +8,13 @@ use App\Http\Controllers\TransactionCategoryController;
 use App\Http\Controllers\TransactionController;
 
 // Auth
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/sign-up', [AuthController::class, 'register']);
+Route::post('/auth/sign-in', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::get('/auth/session', [AuthController::class, 'me']);
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::post('/auth/sign-out', [AuthController::class, 'logout']);
 
     // Currencies
     Route::get('/currencies', [CurrencyController::class, 'index']);
