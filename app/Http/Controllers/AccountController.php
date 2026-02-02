@@ -7,6 +7,7 @@ use App\Http\Requests\Accounts\UpdateAccountRequest;
 use App\Models\Account;
 use App\Services\AccountService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class AccountController extends Controller
 {
@@ -42,5 +43,28 @@ class AccountController extends Controller
         $this->service->delete($account);
         return response()->json([], 204);
     }
-}
 
+    public function common(): JsonResponse
+    {
+        $items = Account::query()
+            ->where('user_id', Auth::id())
+            ->with('currency:id,name,symbol,updated_at')
+            ->orderBy('name')
+            ->get(['id', 'name', 'currency_id', 'updated_at'])
+            ->map(function ($a) {
+                return [
+                    'id' => $a->id,
+                    'name' => $a->name,
+                    'updatedAt' => $a->updated_at,
+                    'currency' => [
+                        'id' => $a->currency?->id,
+                        'name' => $a->currency?->name,
+                        'symbol' => $a->currency?->symbol,
+                        'updatedAt' => $a->currency?->updated_at,
+                    ],
+                ];
+            });
+
+        return response()->json($items);
+    }
+}

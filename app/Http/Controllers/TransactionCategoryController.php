@@ -7,6 +7,8 @@ use App\Http\Requests\TransactionCategories\UpdateTransactionCategoryRequest;
 use App\Models\TransactionCategory;
 use App\Services\TransactionCategoryService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
+use App\Enums\TransactionType as TypeEnum;
 
 class TransactionCategoryController extends Controller
 {
@@ -42,5 +44,28 @@ class TransactionCategoryController extends Controller
         $this->service->delete($transactionCategory);
         return response()->json([], 204);
     }
-}
 
+    public function common(): JsonResponse
+    {
+        $items = TransactionCategory::query()
+            ->where('user_id', Auth::id())
+            ->orderBy('name')
+            ->get(['id', 'name', 'type', 'initial', 'updated_at'])
+            ->map(function ($c) {
+                $type = $c->type instanceof TypeEnum ? $c->type : TypeEnum::from($c->type);
+                $typeInt = match ($type) {
+                    TypeEnum::OUT => 0,
+                    TypeEnum::IN => 1,
+                };
+                return [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'initial' => (bool) $c->initial,
+                    'type' => $typeInt,
+                    'updatedAt' => $c->updated_at,
+                ];
+            });
+
+        return response()->json($items);
+    }
+}

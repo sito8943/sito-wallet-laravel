@@ -7,6 +7,7 @@ use App\Http\Requests\Currencies\UpdateCurrencyRequest;
 use App\Models\Currency;
 use App\Services\CurrencyService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class CurrencyController extends Controller
 {
@@ -42,5 +43,20 @@ class CurrencyController extends Controller
         $this->service->delete($currency);
         return response()->json([], 204);
     }
-}
 
+    public function common(): JsonResponse
+    {
+        $items = Currency::query()
+            ->where('user_id', Auth::id())
+            ->orderBy('name')
+            ->get(['id', 'name', 'symbol', 'updated_at'])
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'symbol' => $c->symbol,
+                'updatedAt' => $c->updated_at,
+            ]);
+
+        return response()->json($items);
+    }
+}

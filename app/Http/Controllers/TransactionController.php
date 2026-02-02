@@ -67,4 +67,34 @@ class TransactionController extends Controller
         $this->service->delete($transaction);
         return response()->json([], 204);
     }
+
+    public function common(): JsonResponse
+    {
+        $query = Transaction::query()
+            ->whereHas('account', fn ($q) => $q->where('user_id', Auth::id()));
+
+        // Optional filters: type and account
+        $type = request()->query('type');
+        $accountId = request()->query('account');
+        if ($accountId) {
+            $query->where('account_id', (int) $accountId);
+        }
+        if ($type !== null) {
+            // 1 => IN, 0 => OUT
+            $query->whereHas('category', function ($q) use ($type) {
+                $q->where('type', ((int) $type) === 1 ? 'IN' : 'OUT');
+            });
+        }
+
+        $items = $query
+            ->orderByDesc('updated_at')
+            ->limit(100)
+            ->get(['id', 'updated_at'])
+            ->map(fn ($t) => [
+                'id' => $t->id,
+                'updatedAt' => $t->updated_at,
+            ]);
+
+        return response()->json($items);
+    }
 }

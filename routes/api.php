@@ -18,6 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Currencies
     Route::get('/currencies', [CurrencyController::class, 'index']);
+    Route::get('/currencies/common', [CurrencyController::class, 'common']);
     Route::post('/currencies', [CurrencyController::class, 'store']);
     Route::get('/currencies/{currency}', [CurrencyController::class, 'show']);
     Route::patch('/currencies/{currency}', [CurrencyController::class, 'update']);
@@ -25,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Accounts
     Route::get('/accounts', [AccountController::class, 'index']);
+    Route::get('/accounts/common', [AccountController::class, 'common']);
     Route::post('/accounts', [AccountController::class, 'store']);
     Route::get('/accounts/{account}', [AccountController::class, 'show']);
     Route::patch('/accounts/{account}', [AccountController::class, 'update']);
@@ -32,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Transaction Categories
     Route::get('/transaction-categories', [TransactionCategoryController::class, 'index']);
+    Route::get('/transaction-categories/common', [TransactionCategoryController::class, 'common']);
     Route::post('/transaction-categories', [TransactionCategoryController::class, 'store']);
     Route::get('/transaction-categories/{transactionCategory}', [TransactionCategoryController::class, 'show']);
     Route::patch('/transaction-categories/{transactionCategory}', [TransactionCategoryController::class, 'update']);
@@ -39,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Transactions
     Route::get('/transactions', [TransactionController::class, 'index']);
+    Route::get('/transactions/common', [TransactionController::class, 'common']);
     Route::post('/transactions', [TransactionController::class, 'store']);
     Route::get('/transactions/{transaction}', [TransactionController::class, 'show']);
     Route::patch('/transactions/{transaction}', [TransactionController::class, 'update']);
