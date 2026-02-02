@@ -1,0 +1,150 @@
+{
+  "project": {
+    "name": "Sito Wallet",
+    "description": "Personal finance and wallet management platform focused on clarity, privacy, and correctness of financial data.",
+    "domain": "financial-wallet",
+    "framework": "laravel",
+    "language": "php",
+    "phpVersion": ">=8.1"
+  },
+
+  "conventions": {
+    "codingStyle": "PSR-12",
+    "naming": {
+      "classes": "StudlyCase",
+      "methods": "camelCase",
+      "variables": "camelCase",
+      "databaseTables": "snake_case_plural",
+      "databaseColumns": "snake_case"
+    },
+    "financialRules": [
+      "Never use floats for monetary values",
+      "All monetary amounts must be stored as integers (cents)",
+      "Currency must always be explicit"
+    ]
+  },
+
+  "architecture": {
+    "controllers": {
+      "type": "thin",
+      "rules": [
+        "Controllers only coordinate requests and responses",
+        "Business logic must not live in controllers",
+        "Use FormRequest classes for validation",
+        "Return API Resources or DTOs for responses"
+      ]
+    },
+    "models": {
+      "type": "eloquent",
+      "rules": [
+        "Models represent domain entities (Wallet, Transaction, Category, Account)",
+        "Use Eloquent relationships explicitly",
+        "Avoid complex business logic in models",
+        "Use accessors for formatting, not calculations",
+        "Use local query scopes for common filters"
+      ]
+    },
+    "services": {
+      "usage": true,
+      "rules": [
+        "All financial operations must go through services",
+        "Services must be deterministic and side-effect aware",
+        "No monetary calculations inside controllers",
+        "Services must be injected via the service container",
+        "Avoid static service usage"
+      ]
+    },
+    "domain": {
+      "patterns": [
+        "Service-oriented domain logic",
+        "Explicit transaction boundaries",
+        "Clear separation between read and write operations"
+      ]
+    },
+    "views": {
+      "engine": "blade",
+      "rules": [
+        "Views are presentational only",
+        "No business or financial logic in views",
+        "Use Blade components and layouts",
+        "Formatting only (dates, currency display)"
+      ]
+    }
+  },
+
+  "filesystem": {
+    "structure": {
+      "app/Http/Controllers": "HTTP controllers",
+      "app/Http/Requests": "Form request validation",
+      "app/Models": "Domain entities (Wallet, Transaction, Category)",
+      "app/Services": "Financial and domain services",
+      "app/Policies": "Authorization policies",
+      "app/Enums": "Domain enums (TransactionType, Currency, Status)",
+      "app/DTOs": "Data transfer objects",
+      "app/Providers": "Service providers",
+      "resources/views": "Blade views",
+      "routes": "Route definitions"
+    }
+  },
+
+  "database": {
+    "rules": [
+      "All monetary values stored as integers",
+      "Use foreign keys and cascading rules carefully",
+      "Soft deletes preferred for financial records"
+    ],
+    "migrations": {
+      "rules": [
+        "Use incremental schema changes",
+        "Do not modify old migrations",
+        "Indexes required for date and foreign key columns"
+      ]
+    },
+    "seeders": {
+      "rules": [
+        "Seeders must be idempotent",
+        "Never seed fake financial data in production",
+        "Factories used only for testing"
+      ]
+    }
+  },
+
+  "testing": {
+    "framework": "phpunit",
+    "rules": [
+      "Write unit tests for financial services",
+      "Write feature tests for API endpoints",
+      "Test edge cases (rounding, negative amounts, currency mismatch)",
+      "Use database transactions in tests",
+      "Factories preferred over manual model creation"
+    ]
+  },
+
+  "security": {
+    "rules": [
+      "Validate all incoming requests",
+      "Use mass assignment protection",
+      "Never trust client input",
+      "Use Laravel policies and gates",
+      "Users can only access their own wallets and transactions",
+      "Sensitive data must never be logged"
+    ]
+  },
+
+  "bestPractices": {
+    "dependencyInjection": true,
+    "singleResponsibility": true,
+    "fatModelsThinControllers": false,
+    "serviceDrivenLogic": true,
+    "avoidHelpersForLogic": true,
+    "useConfigFiles": true,
+    "explicitTransactions": true
+  },
+
+  "outputPreferences": {
+    "explanations": "concise",
+    "codeComments": "minimal",
+    "preferLaravelHelpers": true,
+    "preferExplicitOverMagic": true
+  }
+}
